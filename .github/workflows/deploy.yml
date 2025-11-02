@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -16,11 +19,18 @@ jobs:
       ECR_WORKER: ${{ secrets.ECR_WORKER }}
 
     steps:
-      # 1️⃣ Checkout repo
+      # 1️⃣ Checkout repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2️⃣ Configure AWS credentials
+      # 2️⃣ Debug: confirm ECR URLs are set
+      - name: Debug ECR URLs
+        run: |
+          echo "ECR_FRONTEND=$ECR_FRONTEND"
+          echo "ECR_BACKEND=$ECR_BACKEND"
+          echo "ECR_WORKER=$ECR_WORKER"
+
+      # 3️⃣ Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -28,12 +38,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 3️⃣ Login to Amazon ECR
+      # 4️⃣ Login to AWS ECR
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 4️⃣ Build and Push Docker images
+      # 5️⃣ Build and push Docker images
       - name: Build and Push Docker images
         run: |
           set -e
@@ -51,17 +60,17 @@ jobs:
           docker build -t $ECR_WORKER:latest ./worker
           docker push $ECR_WORKER:latest
 
-      # 5️⃣ Update kubeconfig
-      - name: Update kubeconfig for EKS
+      # 6️⃣ Update kubeconfig for EKS
+      - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
 
-      # 6️⃣ Deploy to EKS
-      - name: Deploy manifests
+      # 7️⃣ Deploy Kubernetes manifests
+      - name: Deploy to EKS
         run: |
           kubectl apply -f k8s/
 
-      # 7️⃣ Verify rollout
+      # 8️⃣ Verify rollout
       - name: Verify Deployment
         run: |
           kubectl get pods -o wide
