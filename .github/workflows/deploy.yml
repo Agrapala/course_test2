@@ -37,11 +37,12 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       # 4️⃣ Build and push Docker images
-      - name: Build and Push Docker images
+      - name: Build and Push Docker Images
         run: |
-          echo "Building Docker images..."
+          set -e
+          echo "Building and pushing Docker images to ECR..."
 
-    
+          # FRONTEND
           docker build -t $ECR_REGISTRY/frontend:latest ./frontend
           docker push $ECR_REGISTRY/frontend:latest
 
