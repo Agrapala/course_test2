@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: 518335628831.dkr.ecr.ap-south-1.amazonaws.com/backend:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DB_HOST
+          value: "database-1.cncm40u8c3il.ap-south-1.rds.amazonaws.com"
+        - name: DB_NAME
+          value: "postgres"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_PASS
+          value: "Samitha0130"
+        - name: REDIS_HOST
+          value: "clustercfg.course-redis.h7j4un.aps1.cache.amazonaws.com:6379"
+        - name: SQS_URL
+          value: "https://sqs.ap-south-1.amazonaws.com/518335628831/courseReg"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: backend
+  ports:
+  - port: 5000
+    targetPort: 5000

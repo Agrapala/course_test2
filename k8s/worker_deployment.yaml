@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: worker
+          image: 518335628831.dkr.ecr.ap-south-1.amazonaws.com/worker:latest
+          env:
+            - name: RDS_HOST
+              value: "database-1.cncm40u8c3il.ap-south-1.rds.amazonaws.com"
+            - name: SQS_URL
+              value: "https://sqs.ap-south-1.amazonaws.com/518335628831/courseReg"
+            - name: SNS_ARN
+              value: "arn:aws:sns:ap-south-1:518335628831:CourseReg"
