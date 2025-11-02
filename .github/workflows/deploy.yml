@@ -4,22 +4,19 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
   deploy:
-    name: Build and Deploy to EKS
     runs-on: ubuntu-latest
-
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
       EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+      ECR_FRONTEND: ${{ secrets.ECR_FRONTEND }}
+      ECR_BACKEND: ${{ secrets.ECR_BACKEND }}
+      ECR_WORKER: ${{ secrets.ECR_WORKER }}
 
     steps:
-      # 1️⃣ Checkout repository
+      # 1️⃣ Checkout repo
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -36,31 +33,31 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 4️⃣ Build and push Docker images
-      - name: Build and Push Docker Images
+      # 4️⃣ Build and Push Docker images
+      - name: Build and Push Docker images
         run: |
           set -e
           echo "Building and pushing Docker images to ECR..."
 
           # FRONTEND
-          docker build -t $ECR_REGISTRY/frontend:latest ./frontend
-          docker push $ECR_REGISTRY/frontend:latest
+          docker build -t $ECR_FRONTEND:latest ./frontend
+          docker push $ECR_FRONTEND:latest
 
           # BACKEND
-          docker build -t $ECR_REGISTRY/backend:latest ./backend
-          docker push $ECR_REGISTRY/backend:latest
+          docker build -t $ECR_BACKEND:latest ./backend
+          docker push $ECR_BACKEND:latest
 
           # WORKER
-          docker build -t $ECR_REGISTRY/worker:latest ./worker
-          docker push $ECR_REGISTRY/worker:latest
+          docker build -t $ECR_WORKER:latest ./worker
+          docker push $ECR_WORKER:latest
 
-      # 5️⃣ Update kubeconfig for EKS
-      - name: Update kubeconfig
+      # 5️⃣ Update kubeconfig
+      - name: Update kubeconfig for EKS
         run: |
           aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
 
       # 6️⃣ Deploy to EKS
-      - name: Apply Kubernetes Manifests
+      - name: Deploy manifests
         run: |
           kubectl apply -f k8s/
 
